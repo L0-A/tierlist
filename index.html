@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>디코방 티어 리스트 (최종)</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        
+        /* 입력창 스타일 */
+        .input-area { margin-bottom: 20px; }
+        input { padding: 8px; font-size: 16px; }
+        button { padding: 8px 15px; font-size: 16px; cursor: pointer; }
+
+        /* 티어 행(Row) 스타일 */
+        .tier-row {
+            display: flex;
+            border: 1px solid #ccc;
+            min-height: 80px;
+            margin-bottom: 5px;
+        }
+
+        /* 티어 라벨 */
+        .tier-label {
+            width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        /* 드롭 구역 */
+        .drop-zone {
+            flex-grow: 1;
+            padding: 10px;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* 드래그할 아이템 */
+        .draggable-item {
+            padding: 8px 15px;
+            background-color: #333;
+            color: white;
+            border-radius: 4px;
+            cursor: grab;
+            user-select: none;
+            transition: background-color 0.2s; /* 부드러운 효과 */
+        }
+        
+        /* 마우스 올렸을 때 삭제 가능하다는 느낌 주기 */
+        .draggable-item:hover {
+            background-color: #555; 
+            cursor: grab;
+        }
+        
+        /* 대기실 */
+        #waiting-room {
+            border: 2px dashed #aaa;
+            padding: 10px;
+            min-height: 100px;
+            margin-top: 20px;
+            background-color: #eee;
+        }
+
+        /* 티어별 색상 */
+        .s-tier { background-color: #ff7f7f; }
+        .a-tier { background-color: #ffbf7f; }
+        .b-tier { background-color: #ffdf7f; }
+        .c-tier { background-color: #ffff7f; color: black; }
+        .d-tier { background-color: #bfff7f; color: black; }
+        .e-tier { background-color: #7fff7f; color: black; }
+    </style>
+</head>
+<body>
+
+    <h1>디코방 티어 리스트</h1>
+    <p style="color: gray; font-size: 14px;">💡 팁: 이름을 더블 클릭하면 삭제할 수 있습니다.</p>
+
+    <div class="input-area">
+        <input type="text" id="nameInput" placeholder="이름을 입력하세요" onkeypress="handleEnter(event)">
+        <button onclick="addName()">추가하기</button>
+    </div>
+
+    <div class="tier-container">
+        <div class="tier-row">
+            <div class="tier-label s-tier">S</div>
+            <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label a-tier">A</div>
+            <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label b-tier">B</div>
+            <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label c-tier">C</div>
+            <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label d-tier">D</div>
+            <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+         <div class="tier-row">
+            <div class="tier-label e-tier">E</div>
+            <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+    </div>
+
+    <h3>대기실 (여기에 생성됨)</h3>
+    <div id="waiting-room" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
+    </div>
+
+    <script>
+        let itemCount = 0;
+
+        function addName() {
+            const input = document.getElementById('nameInput');
+            const name = input.value.trim();
+            
+            if (name === "") return;
+
+            // 중복 체크
+            const existingItems = document.querySelectorAll('.draggable-item');
+            for (let item of existingItems) {
+                if (item.innerText === name) {
+                    alert("이미 존재하는 이름입니다!");
+                    input.value = "";
+                    input.focus();
+                    return;
+                }
+            }
+
+            const newItem = document.createElement('div');
+            itemCount++;
+            
+            newItem.id = "item-" + itemCount;
+            newItem.className = "draggable-item";
+            newItem.innerText = name;
+            newItem.draggable = true;
+            
+            // 드래그 시작 이벤트
+            newItem.ondragstart = drag;
+
+            // --- [추가된 부분] 더블 클릭 시 삭제 이벤트 ---
+            newItem.ondblclick = function() {
+                if (confirm("'" + name + "'을(를) 삭제하시겠습니까?")) {
+                    newItem.remove(); // 요소 삭제
+                }
+            };
+            // ------------------------------------------
+
+            document.getElementById('waiting-room').appendChild(newItem);
+            
+            input.value = "";
+            input.focus();
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') addName();
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            if (ev.target.classList.contains('drop-zone')) {
+                ev.target.appendChild(document.getElementById(data));
+            } else {
+                ev.target.closest('.drop-zone').appendChild(document.getElementById(data));
+            }
+        }
+    </script>
+</body>
+</html>
